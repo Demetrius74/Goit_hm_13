@@ -3,6 +3,7 @@ package org.example;
 import com.google.gson.reflect.TypeToken;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.example.dto.comment.CommentDTO;
 import org.example.dto.post.PostDTO;
 
 import java.io.FileWriter;
@@ -25,19 +26,25 @@ public class Task2 extends Task1 {
         }
     }
 
-    public void writeAllPosts(List<PostDTO> postList, int userId) {
-        for(PostDTO post: postList){
-            System.out.println(post.getTitle());
-            String fileName = String.format("user-%s-post-%d-comments.json", userId, post.getId());
-            String filePath = "src/main/resources/";
-            String json = gson.toJson(post);
+    public List<CommentDTO> getPostComments(int postId) throws IOException {
+        Request request = new Request.Builder()
+                .url(hostUrl+"/users/"+postId+"/comments")
+                .get()
+                .build();
 
-            try (FileWriter writer = new FileWriter(filePath+fileName)) {
-                writer.write(json);
-            } catch (IOException e) {
-                System.out.println("Proizoshla ohibka!");
-                e.printStackTrace(System.out);
-            }
+        try (Response response = client.newCall(request).execute()) {
+            assert response.body() != null;
+            String body = response.body().string();
+            Type listType = new TypeToken<List<CommentDTO>>() {}.getType();
+            return gson.fromJson(body, listType);
+        }
+    }
+
+    public static void writeAllComments(List<CommentDTO> comments, int userId, int postId) throws IOException {
+        String fileName = String.format("user-%s-post-%d-comments.json", userId, postId);
+        String filePath = "src/main/resources/";
+        try (FileWriter writer = new FileWriter(filePath+fileName)) {
+            gson.toJson(comments, writer);
         }
 
         System.out.println("All posts were successfully written.");

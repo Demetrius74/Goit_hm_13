@@ -1,18 +1,21 @@
 package org.example;
 
+import org.example.dto.comment.CommentDTO;
 import org.example.dto.post.PostDTO;
 import org.example.dto.todo.TodoDTO;
 import org.example.dto.user.UserDTO;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) throws IOException {
         // Айді користувача, над яким будемо знущатись
         int userId = 2;
 
-        Task1 task1 = new Task3();
+        Task1 task1 = new Task1();
         System.out.println(task1.createObject());
         System.out.println(task1.deleteObject(userId));
         System.out.println(task1.updateObject(userId));
@@ -23,9 +26,26 @@ public class Main {
         System.out.println();
 
 
-        Task2 task2 = new Task3();
+        Task2 task2 = new Task2();
         List<PostDTO> userPosts = task2.getUserPosts(userId);
-        task2.writeAllPosts(userPosts, userId);
+        Optional<PostDTO> lastPost = userPosts.stream()
+                .max(Comparator.comparing(PostDTO::getId));
+
+        if (lastPost.isPresent()) {
+            PostDTO post = lastPost.get();
+            List<CommentDTO> commentList = task2.getPostComments(post.getId());
+
+            // ТУт виводимо коментарі в термінал
+            commentList.stream()
+                    .map(CommentDTO::getBody)
+                    .forEach(System.out::println);
+
+            // Тут записуємо у файл
+            Task2.writeAllComments(commentList, userId, post.getId());
+        } else {
+            System.out.println("Data is empty.");
+        }
+
         System.out.println();
 
         Task3 task3 = new Task3();
